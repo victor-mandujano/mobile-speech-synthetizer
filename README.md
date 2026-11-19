@@ -45,6 +45,8 @@ Then start the dev server and open the installed app; it connects to the server 
 
 ```bash
 npm start                   # expo start --dev-client
+npm run start:tunnel        # same, but over a tunnel: use when the phone can't reach your
+                            # computer directly (e.g. developing inside WSL2). Slower; needs internet.
 ```
 
 You only need a new development build when native dependencies change. JavaScript changes reload instantly.

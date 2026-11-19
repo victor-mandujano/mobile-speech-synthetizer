@@ -35,6 +35,12 @@ const config: ExpoConfig = {
   experiments: {
     typedRoutes: true,
   },
+  owner: 'eleutheria-technologies',
+  extra: {
+    eas: {
+      projectId: 'de3f0610-9376-41c2-a769-abb0030e385d',
+    },
+  },
 };
 
 export default config;

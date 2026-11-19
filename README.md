@@ -30,7 +30,7 @@ One-time setup:
 ```bash
 npm install -g eas-cli      # or use npx eas-cli@latest
 eas login                   # your Expo account
-eas init                    # links this repo to an EAS project (prints a projectId: add it to app.config.ts under extra.eas.projectId)
+eas init                    # links this repo to an EAS project.
 ```
 
 Build and install:

@@ -1,5 +1,7 @@
 import type { ExpoConfig } from 'expo/config';
 
+import withPiperVoice from './plugins/with-piper-voice.ts';
+
 const config: ExpoConfig = {
   name: 'Repo Reader',
   slug: 'mobile-speech-synthetizer',
@@ -31,6 +33,14 @@ const config: ExpoConfig = {
         imageWidth: 76,
       },
     ],
+    [
+      'expo-audio',
+      {
+        microphonePermission: false,
+        recordAudioAndroid: false,
+        enableBackgroundPlayback: false,
+      },
+    ],
   ],
   experiments: {
     typedRoutes: true,
@@ -43,4 +53,4 @@ const config: ExpoConfig = {
   },
 };
 
-export default config;
+export default withPiperVoice(config);

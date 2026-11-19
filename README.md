@@ -51,11 +51,21 @@ npm run start:tunnel        # same, but over a tunnel: use when the phone can't 
 
 You only need a new development build when native dependencies change. JavaScript changes reload instantly.
 
+## On-device speech (sherpa-onnx + Piper)
+
+Speech is synthesized on the phone by [`react-native-sherpa-onnx`](https://github.com/XDcobra/react-native-sherpa-onnx) with an English Piper voice (`en_US` lessac, medium quality, int8) bundled in the APK. Nothing is sent over the network.
+
+The voice is not committed to git. At prebuild (locally or on EAS), the config plugin `plugins/with-piper-voice.ts` downloads it once from the sherpa-onnx releases, checks its SHA-256, drops the non-English espeak-ng dictionaries, caches it in `assets/models/` (gitignored), and copies it into the generated Android project's assets. To change voices, edit `src/speech/voice.ts`.
+
+Open **Try on-device speech** on the home screen to synthesize a test sentence. It shows the voice load time, synthesis time and real-time factor.
+
 ## Project layout
 
 ```
 src/app/          Expo Router screens (_layout.tsx = navigator, index.tsx = home)
+src/speech/       On-device TTS (voice definition, synthesis, timing metrics)
 src/__tests__/    Jest tests
+plugins/          Local Expo config plugins (bundles the Piper voice)
 assets/           Icons and splash images
 app.config.ts     Expo app config (typed)
 .oxlintrc.json    oxlint rules

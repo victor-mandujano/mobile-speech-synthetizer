@@ -40,3 +40,6 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Piper voice cache (downloaded by plugins/with-piper-voice.ts at prebuild)
+/assets/models/

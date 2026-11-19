@@ -6,7 +6,9 @@ An Android-first Expo / React Native app for browsing a public GitHub repository
 
 - Expo SDK 58, React Native 0.88, TypeScript (strict)
 - Expo Router (file-based routes live in `src/app/`)
-- ESLint (`eslint-config-expo`), Jest (`jest-expo`) with React Native Testing Library
+- TypeScript everywhere: source, tests and config (`app.config.ts`). No JavaScript files.
+- oxlint for linting and oxfmt for formatting
+- Jest (`jest-expo`) with React Native Testing Library
 - EAS Build for cloud builds (no local Android Studio needed)
 
 ## Getting started
@@ -14,7 +16,8 @@ An Android-first Expo / React Native app for browsing a public GitHub repository
 ```bash
 npm install
 npm run typecheck   # tsc --noEmit
-npm run lint        # expo lint
+npm run lint        # oxlint (lint:fix to auto-fix)
+npm run format      # oxfmt (format:check to verify only)
 npm test            # jest
 ```
 
@@ -27,7 +30,7 @@ One-time setup:
 ```bash
 npm install -g eas-cli      # or use npx eas-cli@latest
 eas login                   # your Expo account
-eas init                    # links this repo to an EAS project (writes the projectId into app.json)
+eas init                    # links this repo to an EAS project (prints a projectId: add it to app.config.ts under extra.eas.projectId)
 ```
 
 Build and install:
@@ -52,5 +55,8 @@ You only need a new development build when native dependencies change. JavaScrip
 src/app/          Expo Router screens (_layout.tsx = navigator, index.tsx = home)
 src/__tests__/    Jest tests
 assets/           Icons and splash images
+app.config.ts     Expo app config (typed)
+.oxlintrc.json    oxlint rules
+.oxfmtrc.json     oxfmt options
 eas.json          EAS build profiles (development, preview, production)
 ```

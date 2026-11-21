@@ -3,9 +3,20 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import HomeScreen from '@/app/index';
 import { pickTextFile, type PickTextFileResult } from '@/files/pick-text-file';
+import type { ReadAloudState } from '@/speech/read-aloud';
 
 jest.mock('@/files/pick-text-file', () => ({
   pickTextFile: jest.fn(),
+}));
+
+const mockReadAloud = {
+  state: { phase: 'idle', error: null } as ReadAloudState,
+  play: jest.fn(),
+  stop: jest.fn(),
+};
+
+jest.mock('@/speech/use-read-aloud', () => ({
+  useReadAloud: () => mockReadAloud,
 }));
 
 const mockedPick = jest.mocked(pickTextFile);
@@ -25,6 +36,7 @@ async function pressPick() {
 describe('HomeScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockReadAloud.state = { phase: 'idle', error: null };
   });
 
   it('starts with the pick button and a hint', async () => {
@@ -91,5 +103,57 @@ describe('HomeScreen', () => {
       await screen.findByText('This is not a plain text file. Pick a .txt file.'),
     ).toBeTruthy();
     expect(screen.getByText('photo.txt')).toBeTruthy();
+  });
+
+  describe('reading aloud', () => {
+    beforeEach(() => {
+      mockedPick.mockResolvedValue({
+        kind: 'picked',
+        file: { name: 'notes.txt', text: 'First sentence. Second sentence.' },
+      });
+    });
+
+    it('plays the chunked file text', async () => {
+      await render(<HomeScreen />);
+      await pressPick();
+      await fireEvent.press(await screen.findByRole('button', { name: 'Play' }));
+
+      expect(mockReadAloud.play).toHaveBeenCalledWith([
+        expect.objectContaining({ index: 0, text: 'First sentence.' }),
+        expect.objectContaining({ index: 1, text: 'Second sentence.' }),
+      ]);
+    });
+
+    it('shows progress and a Stop button while reading', async () => {
+      mockReadAloud.state = { phase: 'playing', chunkIndex: 1, chunkCount: 2 };
+      await render(<HomeScreen />);
+      await pressPick();
+
+      expect(await screen.findByText('Sentence 2 of 2')).toBeTruthy();
+      await fireEvent.press(screen.getByRole('button', { name: 'Stop' }));
+      expect(mockReadAloud.stop).toHaveBeenCalled();
+    });
+
+    it('shows a spinner while the next sentence is prepared', async () => {
+      mockReadAloud.state = { phase: 'preparing', chunkIndex: 0, chunkCount: 2 };
+      await render(<HomeScreen />);
+      await pressPick();
+
+      expect(await screen.findByLabelText('Preparing speech')).toBeTruthy();
+    });
+
+    it('shows a synthesis error', async () => {
+      mockReadAloud.state = { phase: 'idle', error: 'Could not synthesize speech: boom' };
+      await render(<HomeScreen />);
+      await pressPick();
+
+      expect(await screen.findByText('Could not synthesize speech: boom')).toBeTruthy();
+    });
+
+    it('stops reading when another file is picked', async () => {
+      await render(<HomeScreen />);
+      await pressPick();
+      expect(mockReadAloud.stop).toHaveBeenCalled();
+    });
   });
 });

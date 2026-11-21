@@ -63,6 +63,11 @@ const ABBREVIATIONS = new Set([
 const SENTENCE_END = /[.!?…]+["'”’»)\]]*(?=\s|$)/g;
 /** A blank line: always ends a sentence, so headings and list items without punctuation stand alone. */
 const PARAGRAPH_BREAK = /\n[ \t]*\n/g;
+/**
+ * A line break before a capital letter: in songs, poems and lists each line reads as its own phrase.
+ * Hard-wrapped prose usually continues in lowercase, so it stays one sentence.
+ */
+const LINE_START = /\n[ \t]*(?=[A-ZÀ-ÖØ-Þ"'“‘([])/g;
 /** Places where a too-long sentence can be split naturally. */
 const CLAUSE_BREAK = /[,;:–—](?=\s)/g;
 
@@ -110,8 +115,13 @@ function findBoundaries(text: string): number[] {
   for (const match of text.matchAll(PARAGRAPH_BREAK)) {
     boundaries.add(match.index + 1);
   }
+  for (const match of text.matchAll(LINE_START)) {
+    boundaries.add(match.index);
+  }
 
-  return [...boundaries].toSorted((a, b) => a - b);
+  // Hermes has no Array#toSorted yet; sorting the fresh copy is equivalent.
+  // oxlint-disable-next-line unicorn/no-array-sort
+  return [...boundaries].sort((a, b) => a - b);
 }
 
 function isSentenceEnd(text: string, index: number, punctuation: string): boolean {

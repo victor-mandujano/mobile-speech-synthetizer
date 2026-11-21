@@ -37,6 +37,12 @@ describe('chunkText', () => {
     ]);
   });
 
+  it('reads lines that start with a capital letter as separate phrases', () => {
+    expect(
+      texts('You are my sunshine\nMy only sunshine\nYou make me happy\nwhen skies are gray'),
+    ).toEqual(['You are my sunshine', 'My only sunshine', 'You make me happy when skies are gray']);
+  });
+
   it('treats a blank line as a boundary even without punctuation', () => {
     expect(texts('Chapter One\n\nIt was a dark night.')).toEqual([
       'Chapter One',

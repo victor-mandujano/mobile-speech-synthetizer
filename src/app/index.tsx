@@ -1,3 +1,4 @@
+import { Link } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
 export default function HomeScreen() {
@@ -7,6 +8,9 @@ export default function HomeScreen() {
       <Text style={styles.subtitle}>
         Browse a GitHub repository and listen to its .md and .txt files.
       </Text>
+      <Link href="/speech-spike" style={styles.link}>
+        Try on-device speech
+      </Link>
     </View>
   );
 }
@@ -27,5 +31,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     opacity: 0.7,
+  },
+  link: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#208AEF',
   },
 });

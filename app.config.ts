@@ -1,4 +1,8 @@
+import 'tsx/cjs'; // Lets app.config.ts import local TypeScript files (plugins/, src/)
+
 import type { ExpoConfig } from 'expo/config';
+
+import withPiperVoice from './plugins/with-piper-voice.ts';
 
 const config: ExpoConfig = {
   name: 'Repo Reader',
@@ -31,6 +35,15 @@ const config: ExpoConfig = {
         imageWidth: 76,
       },
     ],
+    [
+      'expo-audio',
+      {
+        microphonePermission: false,
+        recordAudioAndroid: false,
+        enableBackgroundPlayback: false,
+      },
+    ],
+    'expo-asset',
   ],
   experiments: {
     typedRoutes: true,
@@ -43,4 +56,4 @@ const config: ExpoConfig = {
   },
 };
 
-export default config;
+export default withPiperVoice(config);

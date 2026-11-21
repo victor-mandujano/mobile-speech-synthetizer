@@ -43,6 +43,7 @@ const config: ExpoConfig = {
         enableBackgroundPlayback: false,
       },
     ],
+    'expo-asset',
   ],
   experiments: {
     typedRoutes: true,

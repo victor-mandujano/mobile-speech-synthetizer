@@ -1,8 +1,10 @@
 import { Link } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { pickTextFile, type PickedTextFile } from '@/files/pick-text-file';
+import { useReadAloud } from '@/speech/use-read-aloud';
+import { chunkText } from '@/text/chunk-text';
 
 type State =
   | { status: 'idle' }
@@ -12,9 +14,13 @@ type State =
 
 export default function HomeScreen() {
   const [state, setState] = useState<State>({ status: 'idle' });
+  const readAloud = useReadAloud();
+  const fileText = state.status === 'loaded' ? state.file.text : null;
+  const chunks = useMemo(() => (fileText ? chunkText(fileText) : []), [fileText]);
 
   async function pick() {
     const previous = state;
+    readAloud.stop();
     setState({ status: 'loading' });
     const result = await pickTextFile();
     if (result.kind === 'canceled') {
@@ -27,6 +33,8 @@ export default function HomeScreen() {
   }
 
   const loading = state.status === 'loading';
+  const speech = readAloud.state;
+  const reading = speech.phase !== 'idle';
 
   return (
     <View style={styles.container}>
@@ -67,6 +75,30 @@ export default function HomeScreen() {
           <Text style={styles.fileName} numberOfLines={1}>
             {state.file.name}
           </Text>
+          <View style={styles.player}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={reading ? readAloud.stop : () => readAloud.play(chunks)}
+              style={({ pressed }) => [styles.playButton, pressed && styles.buttonDimmed]}
+            >
+              <Text style={styles.buttonText}>{reading ? 'Stop' : 'Play'}</Text>
+            </Pressable>
+            <View style={styles.playerStatus}>
+              {speech.phase === 'preparing' && (
+                <ActivityIndicator accessibilityLabel="Preparing speech" />
+              )}
+              {reading && (
+                <Text style={styles.progress}>
+                  Sentence {speech.chunkIndex + 1} of {speech.chunkCount}
+                </Text>
+              )}
+              {speech.phase === 'idle' && speech.error && (
+                <Text style={styles.error} accessibilityRole="alert">
+                  {speech.error}
+                </Text>
+              )}
+            </View>
+          </View>
           <ScrollView style={styles.textBox} contentContainerStyle={styles.textContent}>
             <Text style={styles.text} selectable>
               {state.file.text}
@@ -127,6 +159,29 @@ const styles = StyleSheet.create({
   fileName: {
     fontSize: 18,
     fontWeight: '600',
+  },
+  player: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  playButton: {
+    alignItems: 'center',
+    backgroundColor: '#208AEF',
+    borderRadius: 8,
+    minWidth: 96,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  playerStatus: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  progress: {
+    fontSize: 14,
+    opacity: 0.7,
   },
   textBox: {
     flex: 1,

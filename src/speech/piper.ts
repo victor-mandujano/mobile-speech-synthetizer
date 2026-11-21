@@ -40,8 +40,22 @@ function getEngine(): Promise<TtsEngine> {
   return enginePromise;
 }
 
-/** Synthesizes `text` with the bundled Piper voice into a WAV file in the app cache. */
-export async function synthesizeToWav(text: string): Promise<SynthesisResult> {
+let queue: Promise<unknown> = Promise.resolve();
+
+/**
+ * Synthesizes `text` with the bundled Piper voice into a WAV file in the app cache.
+ * Calls run one at a time, in order, because they share one native engine.
+ */
+export function synthesizeToWav(
+  text: string,
+  fileName = 'piper-spike.wav',
+): Promise<SynthesisResult> {
+  const run = queue.then(() => synthesize(text, fileName));
+  queue = run.catch(() => undefined);
+  return run;
+}
+
+async function synthesize(text: string, fileName: string): Promise<SynthesisResult> {
   const engine = await getEngine();
   const modelLoadMs = pendingModelLoadMs;
   pendingModelLoadMs = null;
@@ -51,7 +65,7 @@ export async function synthesizeToWav(text: string): Promise<SynthesisResult> {
   const synthesisMs = Date.now() - startedAt;
 
   const audioSeconds = audioDurationSeconds(audio.samples.length, audio.sampleRate);
-  const path = await saveAudioToFile(audio, `${CachesDirectoryPath}/piper-spike.wav`);
+  const path = await saveAudioToFile(audio, `${CachesDirectoryPath}/${fileName}`);
 
   return {
     wavUri: path.startsWith('file://') ? path : `file://${path}`,

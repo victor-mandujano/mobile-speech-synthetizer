@@ -37,11 +37,11 @@ describe('pickTextFile', () => {
     jest.clearAllMocks();
   });
 
-  it('opens the picker filtered to plain text and copies to cache', async () => {
+  it('opens the picker filtered to text and Markdown and copies to cache', async () => {
     mockedGetDocument.mockResolvedValue({ canceled: true, assets: null });
     await pickTextFile();
     expect(mockedGetDocument).toHaveBeenCalledWith({
-      type: 'text/plain',
+      type: expect.arrayContaining(['text/plain', 'text/markdown']),
       copyToCacheDirectory: true,
     });
   });
@@ -57,9 +57,31 @@ describe('pickTextFile', () => {
 
     await expect(pickTextFile()).resolves.toEqual({
       kind: 'picked',
-      file: { name: 'notes.txt', text: 'Hello world.' },
+      file: { name: 'notes.txt', text: 'Hello world.', format: 'plain' },
     });
     expect(File).toHaveBeenCalledWith('file:///cache/DocumentPicker/notes.txt');
+  });
+
+  it('reads a .md file as Markdown', async () => {
+    mockedGetDocument.mockResolvedValue(
+      pickedAsset({ name: 'README.md', mimeType: 'text/markdown' }),
+    );
+    mockText.mockResolvedValue('# Title');
+    await expect(pickTextFile()).resolves.toEqual({
+      kind: 'picked',
+      file: { name: 'README.md', text: '# Title', format: 'markdown' },
+    });
+  });
+
+  it('accepts a .md file that Android labels application/octet-stream', async () => {
+    mockedGetDocument.mockResolvedValue(
+      pickedAsset({ name: 'notes.md', mimeType: 'application/octet-stream' }),
+    );
+    mockText.mockResolvedValue('Hi.');
+    await expect(pickTextFile()).resolves.toMatchObject({
+      kind: 'picked',
+      file: { format: 'markdown' },
+    });
   });
 
   it('rejects a non-text MIME type without reading it', async () => {
@@ -104,7 +126,7 @@ describe('validateText', () => {
   it('accepts ordinary text', () => {
     expect(validateText('a.txt', 'Hi.')).toEqual({
       kind: 'picked',
-      file: { name: 'a.txt', text: 'Hi.' },
+      file: { name: 'a.txt', text: 'Hi.', format: 'plain' },
     });
   });
 });

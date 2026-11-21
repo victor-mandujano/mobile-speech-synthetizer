@@ -1,3 +1,5 @@
+import 'tsx/cjs'; // Lets app.config.ts import local TypeScript files (plugins/, src/)
+
 import type { ExpoConfig } from 'expo/config';
 
 import withPiperVoice from './plugins/with-piper-voice.ts';

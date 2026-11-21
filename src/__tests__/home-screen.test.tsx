@@ -30,7 +30,7 @@ function deferred() {
 }
 
 async function pressPick() {
-  await fireEvent.press(screen.getByRole('button', { name: 'Pick a .txt file' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Pick a .txt or .md file' }));
 }
 
 describe('HomeScreen', () => {
@@ -41,8 +41,8 @@ describe('HomeScreen', () => {
 
   it('starts with the pick button and a hint', async () => {
     await render(<HomeScreen />);
-    expect(screen.getByRole('button', { name: 'Pick a .txt file' })).toBeTruthy();
-    expect(screen.getByText(/Choose a plain text file/)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Pick a .txt or .md file' })).toBeTruthy();
+    expect(screen.getByText(/Choose a text or Markdown file/)).toBeTruthy();
   });
 
   it('shows a loading indicator while the file is read', async () => {
@@ -54,16 +54,16 @@ describe('HomeScreen', () => {
     const press = pressPick();
 
     expect(await screen.findByLabelText('Loading file')).toBeTruthy();
-    expect(screen.queryByText(/Choose a plain text file/)).toBeNull();
+    expect(screen.queryByText(/Choose a text or Markdown file/)).toBeNull();
     pending.resolve({ kind: 'canceled' });
     await press;
-    expect(await screen.findByText(/Choose a plain text file/)).toBeTruthy();
+    expect(await screen.findByText(/Choose a text or Markdown file/)).toBeTruthy();
   });
 
   it('shows the picked file name and text', async () => {
     mockedPick.mockResolvedValue({
       kind: 'picked',
-      file: { name: 'notes.txt', text: 'Hello world.\nSecond line.' },
+      file: { name: 'notes.txt', text: 'Hello world.\nSecond line.', format: 'plain' },
     });
 
     await render(<HomeScreen />);
@@ -76,7 +76,7 @@ describe('HomeScreen', () => {
   it('keeps the current file when the picker is cancelled', async () => {
     mockedPick.mockResolvedValueOnce({
       kind: 'picked',
-      file: { name: 'notes.txt', text: 'Hello world.' },
+      file: { name: 'notes.txt', text: 'Hello world.', format: 'plain' },
     });
     mockedPick.mockResolvedValueOnce({ kind: 'canceled' });
 
@@ -93,14 +93,14 @@ describe('HomeScreen', () => {
     mockedPick.mockResolvedValue({
       kind: 'error',
       name: 'photo.txt',
-      message: 'This is not a plain text file. Pick a .txt file.',
+      message: 'This is not a text file. Pick a .txt or .md file.',
     });
 
     await render(<HomeScreen />);
     await pressPick();
 
     expect(
-      await screen.findByText('This is not a plain text file. Pick a .txt file.'),
+      await screen.findByText('This is not a text file. Pick a .txt or .md file.'),
     ).toBeTruthy();
     expect(screen.getByText('photo.txt')).toBeTruthy();
   });
@@ -109,7 +109,7 @@ describe('HomeScreen', () => {
     beforeEach(() => {
       mockedPick.mockResolvedValue({
         kind: 'picked',
-        file: { name: 'notes.txt', text: 'First sentence. Second sentence.' },
+        file: { name: 'notes.txt', text: 'First sentence. Second sentence.', format: 'plain' },
       });
     });
 
@@ -121,6 +121,26 @@ describe('HomeScreen', () => {
       expect(mockReadAloud.play).toHaveBeenCalledWith([
         expect.objectContaining({ index: 0, text: 'First sentence.' }),
         expect.objectContaining({ index: 1, text: 'Second sentence.' }),
+      ]);
+    });
+
+    it('shows and reads a Markdown file as speakable text', async () => {
+      mockedPick.mockResolvedValue({
+        kind: 'picked',
+        file: {
+          name: 'README.md',
+          text: '# Setup\n\nRun **npm** [here](https://x.dev).',
+          format: 'markdown',
+        },
+      });
+      await render(<HomeScreen />);
+      await pressPick();
+
+      expect(await screen.findByText('Setup.\n\nRun npm here.')).toBeTruthy();
+      await fireEvent.press(screen.getByRole('button', { name: 'Play' }));
+      expect(mockReadAloud.play).toHaveBeenCalledWith([
+        expect.objectContaining({ index: 0, text: 'Setup.' }),
+        expect.objectContaining({ index: 1, text: 'Run npm here.' }),
       ]);
     });
 

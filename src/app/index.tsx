@@ -5,6 +5,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 import { pickTextFile, type PickedTextFile } from '@/files/pick-text-file';
 import { useReadAloud } from '@/speech/use-read-aloud';
 import { chunkText } from '@/text/chunk-text';
+import { toSpeakableText } from '@/text/markdown-to-speech';
 
 type State =
   | { status: 'idle' }
@@ -15,8 +16,13 @@ type State =
 export default function HomeScreen() {
   const [state, setState] = useState<State>({ status: 'idle' });
   const readAloud = useReadAloud();
-  const fileText = state.status === 'loaded' ? state.file.text : null;
-  const chunks = useMemo(() => (fileText ? chunkText(fileText) : []), [fileText]);
+  const file = state.status === 'loaded' ? state.file : null;
+  // Markdown is shown and read as speakable text, so chunk offsets match what is on screen.
+  const speakableText = useMemo(
+    () => (file ? toSpeakableText(file.text, file.format) : ''),
+    [file],
+  );
+  const chunks = useMemo(() => (speakableText ? chunkText(speakableText) : []), [speakableText]);
 
   async function pick() {
     const previous = state;
@@ -45,12 +51,14 @@ export default function HomeScreen() {
         onPress={pick}
         style={({ pressed }) => [styles.button, (pressed || loading) && styles.buttonDimmed]}
       >
-        <Text style={styles.buttonText}>Pick a .txt file</Text>
+        <Text style={styles.buttonText}>Pick a .txt or .md file</Text>
       </Pressable>
 
       {state.status === 'idle' && (
         <View style={styles.centered}>
-          <Text style={styles.hint}>Choose a plain text file from your phone to see its text.</Text>
+          <Text style={styles.hint}>
+            Choose a text or Markdown file from your phone to see its text.
+          </Text>
           <Link href="/speech-spike" style={styles.link}>
             Try on-device speech
           </Link>
@@ -101,7 +109,7 @@ export default function HomeScreen() {
           </View>
           <ScrollView style={styles.textBox} contentContainerStyle={styles.textContent}>
             <Text style={styles.text} selectable>
-              {state.file.text}
+              {speakableText}
             </Text>
           </ScrollView>
         </View>
